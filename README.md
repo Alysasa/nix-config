@@ -1,96 +1,87 @@
 # Nix Home Manager Setup Guide
 
-This document walks you through setting up Nix and Home Manager to manage your system configuration. This is catered towards Azure ML compute instances with it's inherent volume configuration challenges. Still WIP
+This document walks you through setting up Nix and Home Manager with Flakes to manage your system configuration. This is catered towards Azure ML compute instances with its inherent volume configuration challenges. Still WIP
 
 
-### 1. Install Nix Package Manager
+### 1. Fork and Clone this Repo
 
-First, check if Nix is already installed on your system:
+Clone from your forked repo:
 
 ```bash
-nix --version
+mkdir -p ~/repos
+cd ~/repos
+git clone <forked-repo>
+cd nix-config
 ```
 
-If Nix is not installed, run the official installer:
+### 2. Install Nix Package Manager
+
+If Nix is not installed, run the official installer (yes to all defaults):
 
 ```bash
 sh <(curl -L https://nixos.org/nix/install) --daemon
 ```
 
-After installation, source the Nix profile to use it in your current session:
+Verify installation:
 
 ```bash
-. ~/.nix-profile/etc/profile.d/nix.sh
+nix --version
 ```
 
-### 2. Add Home Manager Channel
+### 3. Enable Experimental Features
 
-Check if the Home Manager channel is already added:
+Run the following to enable system-wide nix commands:
 
 ```bash
-nix-channel --list | grep home-manager
+mkdir -p ~/.config/nix
+echo "experimental-features = nix-command flakes" > ~/.config/nix/nix.conf
 ```
 
-If it's not listed, add the Home Manager channel:
+### 4. Update the Configurations
+
+Specify your userName and userEmail in nix-config/modules/git.nix
+
+### 5. Build and Activate Your Configuration
+
+Build and activate your flake-based Home Manager configurations:
 
 ```bash
-nix-channel --add https://github.com/nix-community/home-manager/archive/master.tar.gz home-manager
-nix-channel --update
+nix run github:nix-community/home-manager -- switch --flake .#azureuser -b backup
 ```
 
-### 3. Install Home Manager
+> [!NOTE]
+> At this point, you should now be setup with basic Nix! Read on to learn more about working with Nix. 
 
-Check if Home Manager is installed:
+### 6. Apply Your Configuration Changes 
+
+To reapply changes after editing your config: 
 
 ```bash
-home-manager --version
+nix flake update
+nix run .#homeConfigurations.azureuser.activationPackage
 ```
 
-If it's not installed, set up the NIX_PATH environment variable and install Home Manager:
+### 7. Roll Back if Needed
+
+This lists previous generations. You can activate an earlier one using its path.
 
 ```bash
-export NIX_PATH=$HOME/.nix-defexpr/channels:/nix/var/nix/profiles/per-user/root/channels${NIX_PATH:+:$NIX_PATH}
-nix-shell '<home-manager>' -A install
+nix run github:nix-community/home-manager -- generations
 ```
 
-### 4. Configure Home Manager
+### 8. Pruning Garbage 
 
-Create the configuration directory if it doesn't exist:
-
-```bash
-mkdir -p ~/.config/home-manager
-```
-
-Link your home.nix configuration file:
+Prune nix system garbage:
 
 ```bash
-# If you're in the directory with your home.nix file:
-ln -sf "$(pwd)/home.nix" ~/.config/home-manager/home.nix
-ln -sf "$(pwd)/modules" ~/.config/home-manager/modules
-```
-
-### 5. Apply Your Configuration
-
-Apply your configuration using Home Manager:
-
-```bash
-home-manager switch -b backup
-```
-
-The `-b backup` flag creates a backup of your previous configuration.
-
-### 6. Rollback to previous generation
-
-Select previous generation link and run respective activation script
-
-```bash
-home-manager generations 
+nix-collect-garbage --delete-older-than 10d
 ```
 
 ## Troubleshooting
 
 - If you encounter permission issues during Nix installation, make sure you have sudo access
-- If Home Manager fails to install, verify that your Nix channels are properly updated
+- You may have to restart or create a new shell after installations or activations to 
+    ensure changes take effect
 - For configuration errors, check the syntax in your home.nix file
 
 ## Additional Resources

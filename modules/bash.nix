@@ -3,7 +3,7 @@
 {
   programs.bash = {
     enable = true;
-    historyControl = [ "ignoreboth" ];
+    historyControl = [ "ignoredups" "ignorespace" ];
     historySize = 1000;
     historyFileSize = 2000;
     
@@ -96,6 +96,14 @@
           . /etc/bash_completion
         fi
       fi
+
+    # Open VS Code at the current working dir and activate the virtual environment
+    code .
+    if [ -d "hso-ml-palantir" ]; then
+      cd hso-ml-palantir
+      ven
+    fi
+
     '';
   };
   

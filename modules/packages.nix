@@ -1,10 +1,7 @@
-{ config, pkgs, ... }:
+{ config, pkgs, unstable, ... }:
 
 {
   home.packages = with pkgs; [
-    # Python ecosystem
-    uv
-
     # Docker ecosystem
     docker
     docker-compose
@@ -14,7 +11,7 @@
     actionlint
     
     # Development tools
-    just
+    unstable.just
     git
     curl
     jq
